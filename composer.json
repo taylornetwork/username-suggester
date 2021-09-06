@@ -1,0 +1,20 @@
+{
+    "name": "taylornetwork/username-suggester",
+    "description": "A package to suggest usernames based on taylornetwork/laravel-username-generator",
+    "require": {
+        "php": "^8.0",
+        "illuminate/support": "^8.58",
+        "taylornetwork/laravel-username-generator": "^2.6"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.20",
+        "psy/psysh": "^0.10.8"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sam Taylor",
+            "email": "sam@taylornetwork.ca"
+        }
+    ]
+}
