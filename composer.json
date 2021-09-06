@@ -16,5 +16,25 @@
             "name": "Sam Taylor",
             "email": "sam@taylornetwork.ca"
         }
-    ]
+    ],
+    "autoload": {
+        "psr-4": {
+            "TaylorNetwork\\UsernameSuggester\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TaylorNetwork\\UsernameSuggester\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TaylorNetwork\\UsernameSuggester\\UsernameSuggesterProvider"
+            ],
+            "aliases": {
+                "UsernameSuggester": "TaylorNetwork\\UsernameSuggester\\Facades\\UsernameSuggester"
+            }
+        }
+    }
 }
