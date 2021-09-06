@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 use TaylorNetwork\UsernameSuggester\Enums\SuggestionType;
 use TaylorNetwork\UsernameGenerator\Generator;
 
-class UsernameSuggester
+class Suggester
 {
     protected Collection $suggestions;
 

@@ -17,6 +17,6 @@ class UsernameSuggesterProvider extends ServiceProvider
 
     public function register()
     {
-        $this->app->bind('UsernameSuggester', UsernameSuggester::class);
+        $this->app->bind('UsernameSuggester', Suggester::class);
     }
 }
