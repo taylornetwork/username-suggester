@@ -26,6 +26,13 @@ class Suggester implements SuggesterContract
     protected Generator $generator;
 
     /**
+     * Driver to use.
+     *
+     * @var string
+     */
+    protected string $driver;
+
+    /**
      * @inheritDoc
      * @throws DriverNotFoundException
      */
@@ -36,11 +43,20 @@ class Suggester implements SuggesterContract
 
     /**
      * @inheritDoc
+     */
+    public function setDriver(string $driver): static
+    {
+        $this->driver = $driver;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
      * @throws DriverNotFoundException
      */
     public function driver(?string $driver = null): Driver
     {
-        $driver ??= config('username_suggester.default', 'increment');
+        $driver ??= $this->driver ?? config('username_suggester.default', 'increment');
 
         if(class_exists($driver)) {
             return new $driver($this->generator());
@@ -69,7 +85,7 @@ class Suggester implements SuggesterContract
     /**
      * @inheritDoc
      */
-    public function setGeneratorConfig(array $config): SuggesterContract
+    public function setGeneratorConfig(array $config): static
     {
         $this->generatorConfig = $config;
         return $this;
@@ -86,5 +102,44 @@ class Suggester implements SuggesterContract
         return ['unique' => false];
     }
 
+    /**
+     * Handle __call and __callStatic.
+     *
+     * @param string $name
+     * @param array $arguments
+     * @return $this
+     */
+    public function callHandler(string $name, array $arguments): static
+    {
+        if(str_starts_with($name, 'using')) {
+            return $this->setDriver(strtolower(substr($name, 5)));
+        }
+
+        throw new \BadMethodCallException();
+    }
+
+    /**
+     * Handle setting driver via "usingDriverName".
+     *
+     * @param string $name
+     * @param array $arguments
+     * @return $this
+     */
+    public function __call(string $name, array $arguments): static
+    {
+        return $this->callHandler($name, $arguments);
+    }
+
+    /**
+     * Handle setting driver via "usingDriverName".
+     *
+     * @param string $name
+     * @param array $arguments
+     * @return static
+     */
+    public static function __callStatic(string $name, array $arguments): static
+    {
+        return (new static)->callHandler($name, $arguments);
+    }
 }
 

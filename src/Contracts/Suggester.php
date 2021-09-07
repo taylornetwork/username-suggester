@@ -36,6 +36,14 @@ interface Suggester
      * @param array $config
      * @return $this
      */
-    public function setGeneratorConfig(array $config): self;
+    public function setGeneratorConfig(array $config): static;
+
+    /**
+     * Set the driver to use.
+     *
+     * @param string $driver
+     * @return $this
+     */
+    public function setDriver(string $driver): static;
 }
 
