@@ -2,70 +2,89 @@
 
 namespace TaylorNetwork\UsernameSuggester;
 
+
 use Illuminate\Support\Collection;
 use TaylorNetwork\UsernameGenerator\Generator;
 use TaylorNetwork\UsernameSuggester\Contracts\Driver;
+use TaylorNetwork\UsernameSuggester\Contracts\Suggester as SuggesterContract;
 use TaylorNetwork\UsernameSuggester\Exceptions\DriverNotFoundException;
 
-class Suggester
+class Suggester implements SuggesterContract
 {
-    protected string $driverClass;
+    /**
+     * Generator config.
+     *
+     * @var array
+     */
+    protected array $generatorConfig;
 
+    /**
+     * Generator instance.
+     *
+     * @var Generator
+     */
     protected Generator $generator;
 
-    protected array $generatorConfig = [
-        'unique' => false,
-    ];
-
+    /**
+     * @inheritDoc
+     * @throws DriverNotFoundException
+     */
     public function suggest(?string $name = null): Collection
     {
-        
+        return $this->driver()->generateSuggestions($name);
     }
 
-    public function getGeneratorInstance(): Generator
+    /**
+     * @inheritDoc
+     * @throws DriverNotFoundException
+     */
+    public function driver(?string $driver = null): Driver
     {
-        if(!$this->generator) {
-            $this->generator = new Generator($this->generatorConfig);
+        $driver ??= config('username_suggester.default', 'increment');
+
+        if(class_exists($driver)) {
+            return new $driver($this->generator());
+        }
+
+        $driver = config('username_suggester.drivers')[$driver];
+
+        if(class_exists($driver)) {
+            return new $driver($this->generator());
+        }
+
+        throw new DriverNotFoundException('Driver not found!');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function generator(): Generator
+    {
+        if(!isset($this->generator)) {
+            $this->generator = new Generator($this->getGeneratorConfig());
         }
         return $this->generator;
     }
 
-    public function generatorConfig(array $config): static
+    /**
+     * @inheritDoc
+     */
+    public function setGeneratorConfig(array $config): SuggesterContract
     {
-        // Unique must always be false, or we will end up with no suggestions
-        $this->generatorConfig = array_merge($config, ['unique' => false]);
+        $this->generatorConfig = $config;
         return $this;
     }
 
-    protected function newDriverInstance(string $classOrKey): Driver
+    /**
+     * Get the generator config.
+     *
+     * @todo update this to reflect setting the config etc.
+     * @return array
+     */
+    protected function getGeneratorConfig(): array
     {
-        if(class_exists($classOrKey)) {
-            return new $classOrKey();
-        }
-
-        $key = strtolower($classOrKey);
-        $drivers = config('username_suggester.drivers', []);
-
-        if(array_key_exists($key, $drivers)) {
-            return new $drivers[$key]();
-        }
-
-        throw new DriverNotFoundException('Could not find driver for ' . $classOrKey);
+        return ['unique' => false];
     }
 
-    protected function forwardCallToDriver(string $name, array $arguments)
-    {
-        return $this->getDriverInstance()->$name(...$arguments);
-    }
-
-    public function __call(string $name, array $arguments)
-    {
-        return $this->forwardCallToDriver($name, $arguments);
-    }
-
-    public static function __callStatic(string $name, array $arguments)
-    {
-        return (new static)->forwardCallToDriver($name, $arguments);
-    }
 }
 
