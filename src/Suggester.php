@@ -94,12 +94,12 @@ class Suggester implements SuggesterContract
     /**
      * Get the generator config.
      *
-     * @todo update this to reflect setting the config etc.
      * @return array
      */
     protected function getGeneratorConfig(): array
     {
-        return ['unique' => false];
+        $config = $this->generatorConfig ?? config('username_suggester.generatorConfig', []);
+        return array_merge($config, ['unique' => false]);
     }
 
     /**
