@@ -3,102 +3,69 @@
 namespace TaylorNetwork\UsernameSuggester;
 
 use Illuminate\Support\Collection;
-use TaylorNetwork\UsernameSuggester\Enums\SuggestionType;
 use TaylorNetwork\UsernameGenerator\Generator;
+use TaylorNetwork\UsernameSuggester\Contracts\Driver;
+use TaylorNetwork\UsernameSuggester\Exceptions\DriverNotFoundException;
 
 class Suggester
 {
-    protected Collection $suggestions;
-
-    protected int $number = 3;
-
-    protected int $style = SuggestionType::INCREMENT;
-
-    protected array $generatorConfig = [];
+    protected string $driverClass;
 
     protected Generator $generator;
 
-    protected ?string $name = null;
+    protected array $generatorConfig = [
+        'unique' => false,
+    ];
 
-    public function __construct()
+    public function suggest(?string $name = null): Collection
     {
-        $this->suggestions = collect();
-    }
-
-    public function __get(string $property): mixed
-    {
-        return $this->$property;
-    }
-
-    public function generatorConfig(array $config): static
-    {
-        $this->generatorConfig = $config;
-        return $this;
+        
     }
 
     public function getGeneratorInstance(): Generator
     {
-        if(!isset($this->generator)) {
-            $this->generator = new Generator(array_merge($this->generatorConfig, ['unique' => false]));
+        if(!$this->generator) {
+            $this->generator = new Generator($this->generatorConfig);
         }
         return $this->generator;
     }
 
-    public function makeSuggestion(): string
+    public function generatorConfig(array $config): static
     {
-        $suggestion = $this->getGeneratorInstance()->generate($this->name);
-        return $this->isUnique($suggestion) ? $suggestion : $this->makeUnique($suggestion);
+        // Unique must always be false, or we will end up with no suggestions
+        $this->generatorConfig = array_merge($config, ['unique' => false]);
+        return $this;
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function isUnique(string $suggestion): bool
+    protected function newDriverInstance(string $classOrKey): Driver
     {
-        try {
-            return $this->getGeneratorInstance()->model()->isUsernameUnique($suggestion) && !$this->suggestions->contains($suggestion);
-        } catch(\BadMethodCallException $exception) {
-            throw new \Exception('User model should be using FindSimilarUsernames trait!');
-        }
-    }
-
-    public function makeUnique(string $suggestion): string
-    {
-        return match ($this->style) {
-            SuggestionType::INCREMENT => $this->suggestIncrement($suggestion),
-            SuggestionType::RANDOM => $this->suggestRandom($suggestion),
-            default => $suggestion,
-        };
-    }
-
-    public function suggestIncrement(string $suggestion): string
-    {
-        $increment = 1;
-
-        while(!$this->isUnique($suggestion.$increment)) {
-            $increment++;
+        if(class_exists($classOrKey)) {
+            return new $classOrKey();
         }
 
-        return $suggestion.$increment;
-    }
+        $key = strtolower($classOrKey);
+        $drivers = config('username_suggester.drivers', []);
 
-    public function suggestRandom(string $suggestion): string
-    {
-        $randVal = rand();
-
-        while(!$this->isUnique($suggestion.$randVal)) {
-            $randVal = rand();
+        if(array_key_exists($key, $drivers)) {
+            return new $drivers[$key]();
         }
 
-        return $suggestion.$randVal;
+        throw new DriverNotFoundException('Could not find driver for ' . $classOrKey);
     }
 
-    public function suggest(?string $name = null): Collection
+    protected function forwardCallToDriver(string $name, array $arguments)
     {
-        $this->name = $name;
-        while($this->suggestions->count() < $this->number) {
-            $this->suggestions->push($this->makeSuggestion());
-        }
-        return $this->suggestions;
+        return $this->getDriverInstance()->$name(...$arguments);
+    }
+
+    public function __call(string $name, array $arguments)
+    {
+        return $this->forwardCallToDriver($name, $arguments);
+    }
+
+    public static function __callStatic(string $name, array $arguments)
+    {
+        return (new static)->forwardCallToDriver($name, $arguments);
     }
 }
+
