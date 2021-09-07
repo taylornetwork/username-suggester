@@ -19,13 +19,6 @@ class Suggester implements SuggesterContract
     protected array $generatorConfig;
 
     /**
-     * Generator instance.
-     *
-     * @var Generator
-     */
-    protected Generator $generator;
-
-    /**
      * Driver to use.
      *
      * @var string
@@ -33,12 +26,25 @@ class Suggester implements SuggesterContract
     protected string $driver;
 
     /**
+     * The amount of suggestions to generate.
+     *
+     * @var int
+     */
+    protected int $amount;
+
+    /**
      * @inheritDoc
      * @throws DriverNotFoundException
      */
     public function suggest(?string $name = null): Collection
     {
-        return $this->driver()->generateSuggestions($name);
+        $driver = $this->driver();
+
+        if(isset($this->amount)) {
+            $driver->setAmount($this->amount);
+        }
+
+        return $driver->generateSuggestions($name);
     }
 
     /**
@@ -49,6 +55,16 @@ class Suggester implements SuggesterContract
         $this->driver = $driver;
         return $this;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function setAmount(int $amount): static
+    {
+        $this->amount = $amount;
+        return $this;
+    }
+
 
     /**
      * @inheritDoc
@@ -76,10 +92,7 @@ class Suggester implements SuggesterContract
      */
     public function generator(): Generator
     {
-        if(!isset($this->generator)) {
-            $this->generator = new Generator($this->getGeneratorConfig());
-        }
-        return $this->generator;
+        return new Generator($this->getGeneratorConfig());
     }
 
     /**
@@ -99,6 +112,8 @@ class Suggester implements SuggesterContract
     protected function getGeneratorConfig(): array
     {
         $config = $this->generatorConfig ?? config('username_suggester.generatorConfig', []);
+
+        // Config must have unique set to false, or it will not be able to generate a username using this package.
         return array_merge($config, ['unique' => false]);
     }
 

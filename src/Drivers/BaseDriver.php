@@ -8,9 +8,26 @@ use TaylorNetwork\UsernameSuggester\Contracts\Driver;
 
 abstract class BaseDriver implements Driver
 {
+    /**
+     * Collection of suggestions.
+     *
+     * @var Collection
+     */
     protected Collection $suggestions;
 
+    /**
+     * Generator instance.
+     *
+     * @var Generator
+     */
     protected Generator $generator;
+
+    /**
+     * Amount of suggestions to generate.
+     *
+     * @var int
+     */
+    protected int $amount;
 
     /**
      * @inheritDoc
@@ -26,7 +43,7 @@ abstract class BaseDriver implements Driver
      */
     public function generateSuggestions(?string $name = null): Collection
     {
-        while($this->suggestions->count() < config('username_suggester.number', 3)) {
+        while($this->suggestions->count() < $this->getAmount()) {
             $this->suggestions->push($this->makeSuggestion($name));
         }
 
@@ -49,6 +66,30 @@ abstract class BaseDriver implements Driver
         return $this->generator->model()->isUsernameUnique($username) && !$this->suggestions->contains($username);
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function setAmount(int $amount): static
+    {
+        $this->amount = $amount;
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAmount(): int
+    {
+        return $this->amount ?? config('username_suggester.amount', 3);
+    }
+
+
+    /**
+     * Make a suggestion.
+     *
+     * @param string|null $name
+     * @return string
+     */
     protected function makeSuggestion(?string $name = null): string
     {
         $suggestion = $this->generator->generate($name);

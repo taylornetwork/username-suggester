@@ -23,6 +23,21 @@ interface Driver
     public function generateSuggestions(?string $name = null): Collection;
 
     /**
+     * Set amount of suggestions.
+     *
+     * @param int $amount
+     * @return $this
+     */
+    public function setAmount(int $amount): static;
+
+    /**
+     * Get the amount of suggestions.
+     *
+     * @return int
+     */
+    public function getAmount(): int;
+
+    /**
      * Get the suggestion collection.
      *
      * @return Collection

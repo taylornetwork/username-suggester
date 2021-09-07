@@ -45,5 +45,13 @@ interface Suggester
      * @return $this
      */
     public function setDriver(string $driver): static;
+
+    /**
+     * Set the amount of suggestions.
+     *
+     * @param int $number
+     * @return $this
+     */
+    public function setAmount(int $amount): static;
 }
 
