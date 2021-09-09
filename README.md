@@ -45,9 +45,9 @@ The `suggest()` method accepts an optional parameter of the name to suggest user
 ```php
 $suggester = new \TaylorNetwork\UsernameSuggester\Suggester();
 
-$suggester->suggest(); \\ Returns a collection of random unique usernames
+$suggester->suggest(); // Returns a collection of random unique usernames
 
-$suggester->suggest('test user'); \\ Returns a collection of unique usernames based on the name 'test user'
+$suggester->suggest('test user'); // Returns a collection of unique usernames based on the name 'test user'
 ```
 
 #### setDriver
