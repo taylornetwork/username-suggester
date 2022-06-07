@@ -2,8 +2,8 @@
     "name": "taylornetwork/username-suggester",
     "description": "A package to suggest usernames based on taylornetwork/laravel-username-generator",
     "require": {
-        "php": "^8.0",
-        "illuminate/support": "^8.58",
+        "php": "^8.0|^8.1",
+        "illuminate/support": ">=8.0",
         "taylornetwork/laravel-username-generator": "^2.6"
     },
     "require-dev": {
